@@ -6,7 +6,7 @@ from modelo import preguntar, CONFIG
 from utilidades import extraer_prueba, registrar
 from prompt import pedir_mensajes
 
-BENCH = os.path.join(os.path.dirname(__file__), "..", "Recursos", "benchmark_R1.json")
+BENCH = os.path.join(os.path.dirname(__file__), "..", "..", "Recursos", "benchmark_R1.json")
 os.makedirs("registros", exist_ok=True)
 
 preguntas = json.load(open(BENCH, encoding="utf-8"))

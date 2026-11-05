@@ -1,0 +1,439 @@
+% =============================================================================
+%  Manual del estudiante · Proyecto final, semana 1 («El hilo»)
+%  Razonamiento Automático (prof. Fabián Serrano) · UNAL Manizales
+%  Compilar: pdflatex Manual_Semana1.tex (dos veces)
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\IfFileExists{spanish.ldf}
+  {\usepackage[spanish,es-noshorthands,es-tabla]{babel}}
+  {\usepackage[provide=*]{babel}\babelprovide[import=es, main]{spanish}}
+\usepackage{mathpazo}
+\linespread{1.06}
+\usepackage[margin=2.3cm,top=2.4cm,bottom=2.6cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{booktabs,array,tabularx}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[breakable,skins]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{psKey}{RGB}{0,80,160}
+\definecolor{psStr}{RGB}{160,60,0}
+\definecolor{resalte}{RGB}{180,0,60}
+\definecolor{confiable}{RGB}{0,120,60}
+\definecolor{noconfiable}{RGB}{200,110,0}
+\definecolor{humano}{RGB}{0,80,160}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setcounter{secnumdepth}{1}
+\titleformat{\section}{\Large\sffamily\bfseries\color{humano}}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{16pt}{6pt}
+\titleformat{\subsection}{\large\sffamily\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{10pt}{3pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\textcolor{gray}{Manual del estudiante · semana 1}}
+\fancyhead[R]{\small\sffamily\textcolor{gray}{\leftmark}}
+\fancyfoot[C]{\small\sffamily\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+\tcbset{enhanced, breakable, boxrule=0.6pt, arc=2pt, left=7pt, right=7pt, top=5pt, bottom=5pt,
+  fonttitle=\sffamily\bfseries\small, before skip=8pt, after skip=8pt}
+\newtcolorbox{idea}{unbreakable, colback=confiable!6, colframe=confiable!75!black, title={La idea en una frase}}
+\newtcolorbox{haga}{colback=humano!5, colframe=humano!75!black, title={Hágalo}}
+\newtcolorbox{ojo}{unbreakable, colback=resalte!5, colframe=resalte!80!black, title={Ojo}}
+\newtcolorbox{falla}[1]{unbreakable, colback=noconfiable!7, colframe=noconfiable!85!black, title={Si sale: #1}}
+
+\newcommand{\cd}[1]{\texttt{\small #1}}
+\lstset{basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+  showstringspaces=false, breaklines=true,
+  keywordstyle=\color{psKey}\bfseries, commentstyle=\color{gray}\itshape,
+  stringstyle=\color{psStr},
+  backgroundcolor=\color{black!4}, frame=leftline, rulecolor=\color{psKey!40},
+  framesep=6pt, xleftmargin=8pt, aboveskip=0.5em, belowskip=0.5em}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\sffamily\bfseries\color{humano} Manual del estudiante --- Semana 1}\\[0.4em]
+  {\large El hilo: el modelo, la configuración y la línea base}\\[0.6em]
+  {\sffamily\small\color{gray} Proyecto final de Razonamiento Automático · Prof.\ Fabián Serrano\\
+  Asesoría: Carlos Orrego · UNAL Manizales · 5 de noviembre de 2026}
+\end{center}
+
+\begin{idea}
+  Al terminar esta semana cada uno tiene un modelo de lenguaje gratuito
+  respondiendo desde Python y sabe medir qué tan mal demuestra cuando
+  nadie lo ayuda. Ese número se llama \textbf{línea base}, y todo el
+  proyecto se mide contra él.
+\end{idea}
+
+\textbf{Cómo usar este manual.} Síganlo en orden, con la terminal
+abierta. Cada caja azul es algo que hay que hacer; cada caja naranja,
+un error típico y cómo salir de él. Todo el código está en el repositorio:
+\url{https://github.com/cmorregof/repo_proyecto_final}.
+
+% ====================================================================
+\section{La idea del proyecto}
+
+Un modelo de lenguaje predice la siguiente palabra más probable. Por eso
+escribe con fluidez, pero lo que escribe es \emph{plausible}, no
+necesariamente \emph{verdadero}. Cuando afirma algo falso con total
+seguridad, se dice que \textbf{alucina}. Isabelle hace lo contrario: no
+se deja convencer por el estilo, acepta o rechaza, y dice dónde falla.
+
+El proyecto junta a los dos: \textbf{el modelo propone; Isabelle
+decide.} El asistente que van a construir busca en los documentos del
+curso (eso es un \emph{RAG}: un examen a libro abierto), le pide al
+modelo una demostración, y se la hace verificar a Isabelle antes de
+mostrarla. Si Isabelle la rechaza, el error vuelve al modelo para que
+corrija.
+
+\begin{center}
+\small
+\begin{tabular}{@{}lll@{}}
+  \toprule
+  Jueves & Nombre & Qué se construye \\
+  \midrule
+  \textbf{1} & \textbf{El hilo} & \textbf{el modelo y la línea base (configuración 1)} \\
+  2 & La biblioteca & buscar en los documentos y citar (configuración 2) \\
+  3 & La flecha roja & verificar con Isabelle y corregir (configuración 3) \\
+  4 & El espejo & evaluar, analizar errores, informe \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Se califica \textbf{la mejora} de la configuración 1 a la 3 con el
+mismo modelo, no el porcentaje absoluto: un modelo gratuito pequeño
+compite en igualdad con uno de pago. Y por encima de todo, la
+honestidad: el asistente nunca dice «verificado» sin que Isabelle lo
+haya aceptado.
+
+% ====================================================================
+\section{Preparar el computador}
+
+\subsection{Lo que necesitan}
+\begin{enumerate}
+  \item \textbf{Isabelle} (el del curso).
+  \item \textbf{Python 3.9 o posterior.} No hay que instalar paquetes.
+  \item \textbf{git} (o descargar el repositorio como ZIP).
+  \item \textbf{Un modelo de lenguaje gratuito}: Ollama (recomendado) u
+    OpenRouter.
+\end{enumerate}
+
+\subsection{Descargar el repositorio}
+\begin{haga}
+\begin{lstlisting}[language=bash]
+git clone https://github.com/cmorregof/repo_proyecto_final.git
+cd repo_proyecto_final
+\end{lstlisting}
+Sin git: botón verde \textbf{Code $\to$ Download ZIP} en la página del
+repositorio. Si ya lo habían clonado, actualicen con \cd{git pull}.
+\end{haga}
+
+\subsection{Decirle a Python dónde está Isabelle}
+\begin{haga}
+Si escribir \cd{isabelle version} en la terminal no funciona, indiquen la
+ruta (ajústenla a su instalación y versión):
+\begin{lstlisting}[language=bash]
+# Mac
+export ISABELLE=/Applications/Isabelle2025-2.app/bin/isabelle
+# Linux
+export ISABELLE=$HOME/Isabelle2025-2/bin/isabelle
+\end{lstlisting}
+Hay que repetirlo en cada terminal nueva (o agregarlo a \cd{\textasciitilde/.zshrc}
+o \cd{\textasciitilde/.bashrc}).
+\end{haga}
+
+\subsection{Camino A: Ollama con Gemma 3 (recomendado)}
+Ollama es un programa gratuito que descarga modelos y los corre en su
+propio computador: sin límite de uso, sin llave, sin costo y sin
+internet. Gemma 3 4B funciona en un portátil de 8\,GB de RAM, sin
+tarjeta gráfica (lento, pero funciona).
+\begin{haga}
+\begin{enumerate}
+  \item Instalar Ollama desde \url{https://ollama.com} (Mac:
+    también \cd{brew install ollama}).
+  \item Descargar el modelo, una sola vez (unos 3\,GB):
+\begin{lstlisting}[language=bash]
+ollama pull gemma3:4b
+\end{lstlisting}
+  \item Dejar el servidor corriendo \textbf{en una terminal aparte} que no
+    se cierra mientras trabajan:
+\begin{lstlisting}[language=bash]
+ollama serve
+\end{lstlisting}
+\end{enumerate}
+\end{haga}
+\begin{falla}{\texttt{address already in use}}
+  Ollama ya está corriendo (por ejemplo, la aplicación). No hay que hacer
+  nada.
+\end{falla}
+
+\subsection{Camino B: OpenRouter}
+Para quien no tenga un computador que aguante el modelo local. Creen una
+cuenta en \url{https://openrouter.ai}, generen una llave y expórtenla:
+\begin{lstlisting}[language=bash]
+export OPENROUTER_API_KEY=sk-or-...
+\end{lstlisting}
+Luego, en \cd{semana1/taller/modelo.py}, cambien \cd{"proveedor"} a
+\cd{"openrouter"} y \cd{"modelo"} a un modelo cuyo nombre termine en
+\cd{:free}.
+\begin{ojo}
+  La llave es una contraseña: \textbf{nunca} la escriban dentro del
+  código ni la suban a GitHub. Las cuentas gratuitas tienen un límite
+  diario (del orden de 50 solicitudes); una corrida completa del
+  proyecto puede pedir 400. Por eso el camino A es el principal.
+\end{ojo}
+
+\subsection{Otros modelos}
+Cualquier modelo pequeño y abierto sirve: \cd{qwen2.5-coder:7b} (sabe de
+código, pide unos 16\,GB), \cd{qwen3:4b}, \cd{phi4-mini},
+\cd{llama3.2:3b} (para computadores modestos). Se cambia el nombre en
+\cd{CONFIG}. \textbf{Regla:} las tres configuraciones del informe, con el
+mismo modelo.
+
+% ====================================================================
+\section{El kit del profesor: la carpeta \texttt{Recursos/}}
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{}}
+  \toprule
+  \cd{verificador.py} & le pregunta a Isabelle si un texto es correcto \\
+  \cd{benchmark\_R1.json} & las 58 preguntas del benchmark público \\
+  \cd{evaluar.py} & califica sus respuestas (el mismo que usará el profesor) \\
+  \cd{ejemplo\_respuestas.json} & el formato de respuestas \\
+  \cd{README.md} & instrucciones detalladas: léanlo \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Probar el verificador}
+\begin{haga}
+Desde la carpeta \cd{Recursos/}:
+\begin{lstlisting}[language=Python]
+from verificador import verificar
+
+r = verificar('lemma "p \\<and> q \\<Longrightarrow> q \\<and> p" by auto')
+print(r.ok)          # True si Isabelle la acepta
+print(r.segundos)    # unos 4 o 5
+print(r.errores)     # lista vacia si r.ok
+\end{lstlisting}
+\end{haga}
+El verificador acepta una teoría completa o solo un pedazo, convierte los
+símbolos Unicode ($\wedge$, $\longrightarrow$) a la forma que exige
+Isabelle (\cd{\textbackslash<and>}\ldots), da los errores con la línea del
+texto que ustedes enviaron, corta las pruebas que no terminan y no deja
+pasar \cd{sorry}.
+
+\subsection{Cómo es una pregunta y qué se responde}
+Cada pregunta del benchmark tiene \cd{id}, \cd{estilo} (\cd{"dn"},
+deducción natural, o \cd{"libre"}), \cd{enunciado} y \cd{contexto} (todo
+lo que va antes del enunciado en la teoría: cabecera y lemas previos).
+
+La respuesta es \textbf{solo lo que va después del enunciado}, desde
+\cd{proof}, \cd{by}, \cd{using} o \cd{apply}. El evaluador arma
+\cd{contexto + enunciado + respuesta + end}.
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{}}
+  \toprule
+  \cd{aceptada} & Isabelle la acepta y respeta el estilo \\
+  \cd{estilo} & la acepta, pero usa \cd{auto} donde se pedía deducción natural \\
+  \cd{rechazada} & Isabelle no la acepta; el informe trae el error \\
+  \cd{trampa} & contiene lemas, axiomas, \cd{sorry} u otros comandos: ni se verifica \\
+  \cd{sin respuesta} & falta \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ====================================================================
+\section{El taller: la configuración 1}
+
+Todo está en \cd{semana1/taller/}. Son cuatro archivos y dos programas:
+
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{}}
+  \toprule
+  \cd{modelo.py} & \cd{CONFIG} y \cd{preguntar()}: hablar con el modelo \\
+  \cd{utilidades.py} & \cd{extraer\_prueba()} y \cd{registrar()} \\
+  \cd{prompt.py} & \cd{pedir\_mensajes()}: armar la pregunta \\
+  \cd{config1.py} & corre el benchmark con solo el modelo \\
+  \cd{paso1c.py} & primera conversación de prueba \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Paso 1: hablar con el modelo}
+En \cd{modelo.py}, todo lo que cambia entre un modelo y otro vive en un
+diccionario:
+\begin{lstlisting}[language=Python]
+CONFIG = {
+    "proveedor":   "ollama",      # o "openrouter"
+    "modelo":      "gemma3:4b",   # o el nombre de otro modelo
+    "temperatura": 0.2,           # baja = respuestas mas estables
+}
+\end{lstlisting}
+La función \cd{preguntar(mensajes)} recibe una lista de mensajes y
+devuelve el texto de la respuesta. Ollama y OpenRouter usan el mismo
+formato, así que el resto del código no cambia. Los mensajes tienen
+\textbf{rol}: \cd{system} (quién es el modelo y sus reglas), \cd{user} (la
+pregunta) y \cd{assistant} (lo que el modelo ya contestó; lo usaremos la
+semana 3).
+
+\begin{haga}
+\begin{lstlisting}[language=bash]
+cd semana1/taller
+python3 paso1c.py
+\end{lstlisting}
+Debe aparecer una explicación de la regla \cd{mp}.
+\end{haga}
+\begin{falla}{\texttt{Connection refused}}
+  Ollama no está corriendo. Abran otra terminal, escriban
+  \cd{ollama serve} y déjenla abierta.
+\end{falla}
+\begin{falla}{\texttt{No such file or directory}}
+  No están en la carpeta correcta. \cd{cd} hasta
+  \cd{repo\_proyecto\_final/semana1/taller} y vuelvan a intentar.
+\end{falla}
+
+\subsection{Lean la respuesta con lupa}
+En el ensayo, Gemma 3 4B respondió a «¿qué dice la regla \cd{mp}?» con
+una explicación correcta de modus ponens\ldots{} y luego un «ejemplo en
+Isabelle/Isar» con \cd{module Main}, \cd{assert}, \cd{check} e
+\cd{infer [mp]}, y unas reglas \cd{and} y \cd{or}. \textbf{Nada de eso
+existe en Isabelle}: una teoría empieza con \cd{theory \ldots{} imports
+Main begin}, \cd{mp} se usa con \cd{using 1 2 by (rule mp)}, y las reglas
+de la conjunción y la disyunción son \cd{conjI}, \cd{conjE},
+\cd{disjI1}, \cd{disjE}. Todo dicho con la misma seguridad.
+
+\begin{ojo}
+  Eso es una alucinación: la mitad es verdad y la otra mitad es
+  «Isabelle imaginario», sin que el tono cambie. Por eso este proyecto
+  existe.
+\end{ojo}
+
+\subsection{Paso 2: limpiar la respuesta y dejar registro}
+Los modelos rodean la prueba de explicaciones y comillas triples, y
+\textbf{a veces repiten el enunciado aunque se les pida que no}.
+\cd{extraer\_prueba} saca el bloque de código; si empieza con
+\cd{lemma}, corta hasta la primera línea que empiece con \cd{proof},
+\cd{by}, \cd{using} o \cd{apply}; y quita un \cd{oops} final.
+
+\cd{registrar} agrega una línea JSON por evento al archivo de registro
+(modo \cd{"a"}: se agrega, nunca se borra). \textbf{Sin registros no se
+califica} (requisito R5).
+
+\subsection{Paso 3: armar la pregunta}
+\cd{pedir\_mensajes(p, extra="")} junta el contexto, un espacio
+\cd{extra}, el enunciado y la regla de estilo (si es \cd{dn}: solo
+\cd{rule}, \cd{erule}, \cd{assumption}\ldots; nada de \cd{auto},
+\cd{simp}, \cd{blast}). Hoy \cd{extra} va vacío; la semana 2 ahí entran
+los pasajes que encuentre la búsqueda.
+
+\subsection{Paso 4: correr y calificar}
+\begin{haga}
+Primero con 3 preguntas, para comprobar que todo funciona:
+\begin{lstlisting}[language=bash]
+python3 config1.py 3
+python3 ../../Recursos/evaluar.py ../../Recursos/benchmark_R1.json \
+        respuestas_config1.json --paralelo 4 --informe informe_c1.json
+\end{lstlisting}
+Cuando funcione, las 58: \cd{python3 config1.py} y de nuevo
+\cd{evaluar.py}.
+\end{haga}
+\begin{ojo}
+  Con Gemma 3 4B en un portátil sin tarjeta gráfica, las 58 tardaron unos
+  \textbf{22 minutos} en el ensayo: la mayoría tarda segundos, pero
+  algunas respuestas se van en bucle y tardan hasta 3 minutos. Déjenlo
+  corriendo y hagan otra cosa.
+\end{ojo}
+
+\subsection{Lo que pasó en el ensayo: 44 «trampas»}
+Con una primera versión de \cd{extraer\_prueba} que no quitaba el
+enunciado repetido, las 58 salieron: \textbf{0 aceptadas, 0 de estilo, 14
+rechazadas y 44 \cd{trampa}}. Gemma no hacía trampa a propósito:
+desobedecía la instrucción «sin repetir el enunciado» y copiaba el
+\cd{lemma}, así que el evaluador ni la mandaba a Isabelle.
+
+\textbf{La lección:} una instrucción en el prompt no es una garantía. Lo
+que el modelo \emph{debe} cumplir lo verifica el programa. Limpiar el
+formato no es hacer trampa (no se cambia la prueba, solo se quita lo que
+el evaluador ya pone), pero hay que declararlo en el informe.
+
+Errores reales de Gemma que Isabelle atrapó en el ensayo:
+\begin{itemize}
+  \item \textbf{Ejercicio 11:} inventa la regla
+    \cd{implicacion\_con\_consecuencia}; Isabelle: \cd{Undefined fact}.
+  \item \textbf{Ejercicio 12:} inventa la regla \cd{imply}.
+  \item \textbf{Ejercicio 1:} \cd{using 1, 2 by rule} falla solo por la
+    coma; sin ella, Isabelle la acepta.
+  \item \textbf{Ejercicio 1, otra variante:} \cd{using 2 1 by (rule mp)}
+    falla con \cd{Failed to apply initial proof method}, porque \cd{mp}
+    espera primero la implicación y luego la premisa.
+\end{itemize}
+
+\textbf{El número que obtengan con la limpieza corregida es su línea
+base. Anótenlo.}
+
+% ====================================================================
+\section{Temas de formalización}
+
+Cada grupo (máximo tres) toma un tema distinto. Los ejercicios de cada
+grupo serán el examen de los asistentes de los demás: al menos 8, dos de
+ellos \cd{[***]}.
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.4cm}Xc@{}}
+  \toprule
+  Rama & Teorema central & Nivel \\
+  \midrule
+  Codificación & \cd{decodificar (codificar xs) = xs} (longitud de racha) & $\star$ \\
+  Criptografía clásica & César o Vigenère: descifrar invierte a cifrar & $\star$ \\
+  Algoritmos & Ordenamiento por inserción: ordena y es permutación & $\star\star$ \\
+  Estructuras de datos & Árboles de búsqueda: la inserción preserva el orden & $\star\star$ \\
+  Compiladores & Expresiones a máquina de pila: \cd{exec (compilar e) [] = [eval e]} & $\star\star$ \\
+  Lenguajes formales & Palíndromos o paréntesis balanceados & $\star\star$ \\
+  Lógica computacional & La forma normal negativa preserva el significado & $\star\star$ \\
+  Arquitectura & Sumador binario sobre listas de bits & $\star\star\star$ \\
+  Grafos & Alcanzabilidad como cierre reflexivo-transitivo & $\star\star\star$ \\
+  Lenguajes de programación & Tipado de expresiones: preservación & $\star\star\star$ \\
+  Teoría de la computación & Autómatas: el producto reconoce la intersección & $\star\star\star$ \\
+  Software (entusiastas) & Verificar un programa imperativo (ver \emph{Concrete Semantics}) & $\star\star\star$ \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+% ====================================================================
+\section{Tarea para el próximo jueves}
+
+\begin{haga}
+\begin{enumerate}
+  \item Configuración 1 completa sobre las 58: \cd{respuestas\_config1.json},
+    \cd{registros/config1.jsonl} e \cd{informe\_c1.json}.
+  \item Leer diez registros a mano y clasificar los errores del modelo:
+    sintaxis, reglas inventadas, orden de los hechos, \cd{auto}
+    prohibido, enunciado repetido\ldots{} Es material del informe.
+  \item Tema de formalización: tres opciones en orden de preferencia, y
+    los dos primeros enunciados escritos en Isabelle.
+\end{enumerate}
+\end{haga}
+
+\begin{center}
+  \large\color{resalte}\bfseries La verdad no la pone el modelo más caro: la pone Isabelle.
+\end{center}
+
+\end{document}
