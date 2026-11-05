@@ -1,0 +1,4 @@
+{
+ "R1/ejercicio_1": "proof -\n  show \"q\" using 1 2 by (rule mp)\nqed",
+ "R1/ejercicio_2": "using assms by auto"
+}
