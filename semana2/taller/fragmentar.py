@@ -72,12 +72,34 @@ def paginas_pdf(ruta):
     return [p.extract_text() or "" for p in PdfReader(str(ruta)).pages]
 
 
+def bloques(texto, maximo=600):
+    """Parte una pagina en bloques de a lo sumo ~maximo caracteres, cortando en
+    lineas en blanco. Una pagina entera es larga y BM25 castiga lo largo."""
+    partes = [p.strip() for p in re.split(r"\n\s*\n", texto) if p.strip()]
+    salida, actual = [], ""
+    for p in partes:
+        if actual and len(actual) + len(p) > maximo:
+            salida.append(actual)
+            actual = ""
+        actual = (actual + "\n\n" + p) if actual else p
+    if actual:
+        salida.append(actual)
+    return salida
+
+
 def fragmentar_pdf(ruta, raiz):
-    """Un fragmento por pagina: se cita como documento y pagina."""
+    """Bloques de cada pagina; se cita como documento y pagina."""
     paginas = paginas_pdf(ruta)
     if paginas is None:
         return None
     fuente = str(pathlib.Path(ruta).relative_to(raiz))
-    return [{"fuente": fuente, "pagina": n, "tipo": "pagina", "nombre": "",
-             "con_prueba": False, "texto": t.strip()}
-            for n, t in enumerate(paginas, 1) if len(t.strip()) > 40]
+    frags = []
+    for n, t in enumerate(paginas, 1):
+        siguiente = set(paginas[n].split()) if n < len(paginas) else set()
+        if t.split() and set(t.split()) <= siguiente:
+            continue        # diapositiva con animacion: la pagina siguiente ya la contiene
+        for b in bloques(t):
+            if len(b) > 40:
+                frags.append({"fuente": fuente, "pagina": n, "tipo": "pagina", "nombre": "",
+                              "con_prueba": False, "texto": b})
+    return frags

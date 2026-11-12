@@ -7,8 +7,10 @@ SIMBOLOS = {
     "and":            ["\\<and>", "∧"],              # conjuncion
     "or":             ["\\<or>", "∨"],               # disyuncion
     "not":            ["\\<not>", "¬"],              # negacion
-    "implies":        ["\\<longrightarrow>", "⟶", "-->"],
+    "implies":        ["\\<longrightarrow>", "⟶", "-->",
+                       "−→", "→"],                    # asi sale de los PDF
     "entails":        ["\\<Longrightarrow>", "⟹", "==>",
+                       "=⇒", "⇒",                     # asi sale de los PDF
                        "\\<turnstile>", "⊢"],        # |- de los enunciados
     "iff":            ["\\<longleftrightarrow>", "⟷"],
     "forall":         ["\\<forall>", "∀"],
