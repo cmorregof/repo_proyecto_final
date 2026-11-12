@@ -6,3 +6,4 @@ registros/
 respuestas*.json
 !Recursos/ejemplo_respuestas.json
 informe*.json
+indice.json

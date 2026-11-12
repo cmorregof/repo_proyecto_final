@@ -1,0 +1,402 @@
+% =============================================================================
+%  Manual del estudiante · Proyecto final, semana 2 («La biblioteca»)
+%  Razonamiento Automático (prof. Fabián Serrano) · UNAL Manizales
+%  Compilar: pdflatex Manual_Semana2.tex (dos veces)
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\IfFileExists{spanish.ldf}
+  {\usepackage[spanish,es-noshorthands,es-tabla]{babel}}
+  {\usepackage[provide=*]{babel}\babelprovide[import=es, main]{spanish}}
+\usepackage{mathpazo}
+\linespread{1.06}
+\usepackage[margin=2.3cm,top=2.4cm,bottom=2.6cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{booktabs,array,tabularx}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[breakable,skins]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{psKey}{RGB}{0,80,160}
+\definecolor{psStr}{RGB}{160,60,0}
+\definecolor{resalte}{RGB}{180,0,60}
+\definecolor{confiable}{RGB}{0,120,60}
+\definecolor{noconfiable}{RGB}{200,110,0}
+\definecolor{humano}{RGB}{0,80,160}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setcounter{secnumdepth}{1}
+\titleformat{\section}{\Large\sffamily\bfseries\color{humano}}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{16pt}{6pt}
+\titleformat{\subsection}{\large\sffamily\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{10pt}{3pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\textcolor{gray}{Manual del estudiante · semana 2}}
+\fancyhead[R]{\small\sffamily\textcolor{gray}{\leftmark}}
+\fancyfoot[C]{\small\sffamily\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+
+\tcbset{enhanced, breakable, boxrule=0.6pt, arc=2pt, left=7pt, right=7pt, top=5pt, bottom=5pt,
+  fonttitle=\sffamily\bfseries\small, before skip=8pt, after skip=8pt}
+\newtcolorbox{idea}{unbreakable, colback=confiable!6, colframe=confiable!75!black, title={La idea en una frase}}
+\newtcolorbox{haga}{colback=humano!5, colframe=humano!75!black, title={Hágalo}}
+\newtcolorbox{ojo}{unbreakable, colback=resalte!5, colframe=resalte!80!black, title={Ojo}}
+\newtcolorbox{falla}[1]{unbreakable, colback=noconfiable!7, colframe=noconfiable!85!black, title={Si sale: #1}}
+
+\newcommand{\cd}[1]{\texttt{\small #1}}
+\lstset{basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+  showstringspaces=false, breaklines=true,
+  keywordstyle=\color{psKey}\bfseries, commentstyle=\color{gray}\itshape,
+  stringstyle=\color{psStr},
+  backgroundcolor=\color{black!4}, frame=leftline, rulecolor=\color{psKey!40},
+  framesep=6pt, xleftmargin=8pt, aboveskip=0.5em, belowskip=0.5em}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\sffamily\bfseries\color{humano} Manual del estudiante --- Semana 2}\\[0.4em]
+  {\large La biblioteca: buscar en los documentos y citar}\\[0.6em]
+  {\sffamily\small\color{gray} Proyecto final de Razonamiento Automático · Prof.\ Fabián Serrano\\
+  Asesoría: Carlos Orrego · UNAL Manizales · 12 de noviembre de 2026}
+\end{center}
+
+\begin{idea}
+  Esta semana el modelo deja de responder de memoria. Antes de cada
+  pregunta, el programa busca en los documentos del curso los pasajes que
+  más se le parecen y se los entrega. Eso es la \textbf{configuración 2}.
+  Como el modelo es el mismo de la semana pasada, la diferencia con la
+  línea base mide lo que aporta la búsqueda.
+\end{idea}
+
+\textbf{Cómo usar este manual.} Igual que el de la semana 1: en orden y con
+la terminal abierta. Las cajas azules son para hacer; las naranjas, errores
+típicos. Todo el código está en \cd{semana2/taller/} del repositorio:
+\url{https://github.com/cmorregof/repo_proyecto_final}.
+
+% ====================================================================
+\section{Qué cambia respecto a la semana 1}
+
+En la configuración 1 el modelo recibía el contexto de la teoría y el
+enunciado, y tenía que sacar la demostración de lo que recordara. Un modelo
+pequeño recuerda poco de Isabelle, y por eso inventa reglas y sintaxis.
+
+En la configuración 2 se agrega un paso antes de llamar al modelo:
+
+\begin{center}
+\small
+\begin{tabular}{@{}cl@{}}
+  \toprule
+  Paso & Qué hace \\
+  \midrule
+  1 & Una sola vez: partir el corpus en fragmentos y guardarlos en \cd{indice.json} \\
+  2 & Para cada pregunta: buscar los 3 fragmentos más parecidos (BM25) \\
+  3 & Pegarlos en el mensaje, antes del enunciado, con una etiqueta [F1], [F2], [F3] \\
+  4 & Llamar al \textbf{mismo} modelo y limpiar la respuesta \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Todavía no hay verificación dentro del asistente: eso es la semana 3.
+Isabelle solo entra al final, cuando \cd{evaluar.py} califica.
+
+\begin{ojo}
+  Las tres configuraciones del informe van con el mismo modelo y la misma
+  temperatura. Si cambian de modelo entre la 1 y la 2, la comparación ya no
+  dice nada sobre la búsqueda.
+\end{ojo}
+
+% ====================================================================
+\section{Preparar}
+
+\begin{haga}
+\begin{lstlisting}[language=bash]
+cd repo_proyecto_final
+git pull                      # trae semana2/ y ConjuntoDatos/
+cd semana2/taller
+python3 indexar.py            # crea indice.json (unos segundos)
+\end{lstlisting}
+\end{haga}
+
+\cd{ConjuntoDatos/} es el corpus del curso: las teorías \cd{.thy}, los dos
+libros de Alonso y las diapositivas. Lo autorizó el profesor Fabián para el
+repositorio.
+
+Para leer los PDF hace falta una de dos herramientas. Si no tienen
+ninguna, el índice se construye igual, solo con las teorías, y
+\cd{indexar.py} lo avisa.
+
+\begin{lstlisting}[language=bash]
+pip install pypdf             # opcion 1, en cualquier sistema
+brew install poppler          # opcion 2, en Mac (trae pdftotext)
+\end{lstlisting}
+
+La salida esperada es parecida a esta:
+
+\begin{lstlisting}
+2318 fragmentos de .../ConjuntoDatos
+  pagina       1285
+  lemma        728
+  ...
+  lemas con demostracion: 588
+Listo: indice.json
+\end{lstlisting}
+
+% ====================================================================
+\section{Las piezas de la búsqueda}
+
+\subsection{Normalizar los símbolos}
+
+En los \cd{.thy} la conjunción se escribe \cd{\textbackslash<and>}; en los
+PDF y en lo que escribe el modelo, $\wedge$. Si no se unifican, la búsqueda
+no ve que son lo mismo. \cd{normalizar.py} pasa los dos a una palabra común:
+
+\begin{lstlisting}[language=Python]
+SIMBOLOS = {
+    "and":     ["\\<and>", "∧"],
+    "implies": ["\\<longrightarrow>", "⟶", "-->"],
+    "entails": ["\\<Longrightarrow>", "⟹", "==>", "\\<turnstile>", "⊢"],
+    ...
+}
+\end{lstlisting}
+
+\subsection{Fragmentar por comandos, no por tamaño}
+
+Un lema partido por la mitad no le sirve a nadie. \cd{fragmentar.py} corta
+cada \cd{.thy} donde empieza un comando (\cd{lemma}, \cd{definition},
+\cd{fun}, \cd{section}\ldots) y guarda, para poder citar, el archivo, la
+línea y el nombre. Hay dos decisiones que vale la pena entender:
+
+\begin{itemize}
+  \item \textbf{Los bloques \cd{text} se pegan al lema que sigue.} En las
+    relaciones de Alonso, el enunciado en palabras va en un \cd{text} justo
+    antes del lema: «Ejercicio 3. Demostrar $p \longrightarrow q$, \ldots».
+    Separado del lema, ese texto no ayuda a encontrar la demostración.
+  \item \textbf{Cada lema sabe si trae demostración.} Uno que termina en
+    \cd{oops} o \cd{sorry} es un enunciado sin resolver. Para demostrar no
+    sirve, así que \cd{config2.py} lo filtra.
+\end{itemize}
+
+Los PDF se fragmentan por página, y se citan con documento y página.
+
+\subsection{BM25}
+
+BM25 es un método clásico de recuperación por palabras. Para cada
+fragmento suma, por cada palabra de la consulta que aparece en él, un
+puntaje que crece con:
+
+\begin{itemize}
+  \item cuántas veces aparece la palabra en el fragmento, con un techo
+    (la décima repetición aporta poco);
+  \item qué tan rara es la palabra en todo el corpus: \cd{conjE} pesa
+    mucho más que \cd{by}.
+\end{itemize}
+
+Además penaliza los fragmentos muy largos, que contienen de todo. Son
+treinta líneas de Python puro en \cd{buscar.py}, y se pueden explicar
+completas en la sustentación.
+
+Se prueba solo, sin modelo:
+
+\begin{haga}
+\begin{lstlisting}[language=bash]
+python3 buscar.py "conjE"
+python3 buscar.py "eliminacion de la disyuncion" 3
+\end{lstlisting}
+\end{haga}
+
+\subsection{Por qué BM25 y no \emph{embeddings}}
+
+Los RAG más conocidos buscan con \emph{embeddings}, vectores que capturan
+el significado. Aquí empezamos por BM25 porque las consultas importantes son
+literales: el nombre de una regla, de una función, una fórmula. Además no
+hay que descargar nada. Comparar BM25 con \emph{embeddings} locales es un
+buen apartado opcional del informe.
+
+% ====================================================================
+\section{Medir la búsqueda antes de gastar el modelo}
+
+Si la búsqueda no encuentra el pasaje útil, el modelo no tiene con qué
+mejorar, y uno termina culpando al modelo de un error de la búsqueda. Por
+eso conviene medirla por separado.
+
+En el benchmark público eso se puede hacer sin modelo. La solución del
+ejercicio $n$ de R1 está en \cd{R1\_Deduccion\_natural.thy}, en los lemas
+\cd{ejercicio\_n\_1}, \cd{ejercicio\_n\_2}\ldots. \cd{medir\_recuperacion.py}
+busca cada pregunta y cuenta en qué puesto aparece su solución.
+
+\begin{haga}
+\begin{lstlisting}[language=bash]
+python3 medir_recuperacion.py        # agreguen -v para ver cada pregunta
+\end{lstlisting}
+\end{haga}
+
+\subsection{Lo que pasó en el ensayo: de 3 a 57}
+
+La primera versión de \cd{buscar.py} usaba palabras sueltas. La solución
+quedó de primera en \textbf{3 de 58} preguntas y entre las tres primeras en
+15. El problema es que en lógica proposicional todas las fórmulas usan las
+mismas palabras: \cd{p}, \cd{q}, \cd{implies}, \cd{not}. Con palabras
+sueltas, $p \longrightarrow q$ y $q \longrightarrow p$ son idénticas.
+
+El arreglo fue una línea: además de las palabras sueltas, contar los
+\textbf{pares de palabras seguidas}.
+
+\begin{lstlisting}[language=Python]
+def tokens(texto):
+    t = re.findall(r"[a-z_][a-z0-9_']*|[0-9]+", normalizar(texto))
+    return t + [a + "+" + b for a, b in zip(t, t[1:])]
+\end{lstlisting}
+
+Con eso la solución quedó de primera en \textbf{57 de 58} y entre las tres
+primeras en las 58.
+
+\begin{ojo}
+  Parte de ese 57 viene del número: la consulta dice «Ejercicio 3» y el
+  libro también. En el benchmark privado no habrá esa pista. Quitando el
+  número y el nombre del lema, con la fórmula sola, la solución queda entre
+  las tres primeras en 56 de 58. Ese es el número honesto, y es el que
+  sirve para la formalización propia.
+\end{ojo}
+
+% ====================================================================
+\section{El taller: la configuración 2}
+
+\subsection{De la pregunta a los pasajes}
+
+\cd{rag.py} arma la consulta con el enunciado y el último bloque
+\cd{text} del contexto, que dice el ejercicio en palabras. Busca 3
+fragmentos, solo entre los lemas con demostración, y los pega con su
+etiqueta y su procedencia:
+
+\begin{lstlisting}
+[F1] (TeoriasIsabelle/R1_Deduccion_natural.thy, linea 55 (ejercicio_1_1))
+text \<open> Ejercicio 1. Demostrar ... \<close>
+lemma ejercicio_1_1:
+  assumes 1: "p \<longrightarrow> q" and 2: "p"
+  shows "q"
+proof - ...
+\end{lstlisting}
+
+Para no ahogar a un modelo pequeño, cada fragmento se corta en 1\,500
+caracteres. Con tres fragmentos el mensaje queda en unos 4\,700 caracteres.
+
+\subsection{Un error nuevo: el modelo copia el fragmento}
+
+Con un modelo falso que copia el primer fragmento tal cual, apareció un
+problema. La respuesta trae el bloque \cd{text}, la línea \cd{lemma
+ejercicio\_1\_1:} y a veces el lema siguiente. Para \cd{evaluar.py} eso es
+\textbf{trampa}, porque contiene \cd{lemma}. La versión de la semana 1 de
+\cd{extraer\_prueba} solo quitaba un \cd{lemma} al principio.
+
+\cd{limpiar.py} trae la versión 2: se queda con lo que va desde la primera
+palabra que abre una demostración (\cd{proof}, \cd{by}, \cd{using},
+\cd{apply}\ldots) hasta donde empieza otro comando. Si no encuentra
+ninguna, devuelve vacío. Una respuesta vacía cuenta como «sin respuesta»,
+que es más honesto que mandar basura.
+
+\subsection{Correr y calificar}
+
+\begin{haga}
+\begin{lstlisting}[language=bash]
+python3 config2.py 3          # primero 3, para ver que todo funciona
+python3 config2.py            # las 58
+python3 ../../Recursos/evaluar.py ../../Recursos/benchmark_R1.json \
+        respuestas_config2.json --paralelo 4 --informe informe_c2.json
+\end{lstlisting}
+\end{haga}
+
+\cd{config2.py} importa \cd{modelo.py} de la semana 1, así que usa el modelo
+que ya tienen configurado ahí. Cada línea de \cd{registros/config2.jsonl}
+guarda los pasajes recuperados con su puntaje, el mensaje completo, la
+respuesta cruda y la prueba limpia (requisito R5).
+
+\subsection{Lo que pasó en el ensayo con el modelo}
+
+%RESULTADOS
+
+% ====================================================================
+\section{Responder con fuentes, o admitir que no se sabe}
+
+Las preguntas conceptuales (R1 y R2 del enunciado) se califican de 0 a 3, y
+una cita inventada vale 0. \cd{preguntar.py} usa un truco sencillo: los
+pasajes llegan al modelo con etiquetas, y se le pide citar \emph{por
+etiqueta}. El programa, no el modelo, traduce cada etiqueta en archivo y
+línea o en documento y página. Si el modelo escribe una etiqueta que no
+existe, el código lo detecta.
+
+\begin{haga}
+\begin{lstlisting}[language=bash]
+python3 preguntar.py "Que diferencia hay entre rule y erule en Isabelle?"
+\end{lstlisting}
+\end{haga}
+
+La respuesta termina con la lista de fuentes realmente citadas. Hay dos
+avisos posibles:
+
+\begin{itemize}
+  \item \cd{!! CITA INVENTADA}: el modelo usó una etiqueta que no le dimos.
+  \item \cd{!! La respuesta no cita nada y tampoco admite que no sabe}.
+\end{itemize}
+
+\begin{ojo}
+  Que una etiqueta exista no garantiza que el fragmento diga lo que el
+  modelo afirma. Eso todavía hay que revisarlo a mano, y es parte de la
+  tarea. Es la misma lección de la semana 1: una instrucción en el prompt
+  no es una garantía; lo que importa se revisa en código o a mano.
+\end{ojo}
+
+% ====================================================================
+\section{Errores típicos}
+
+\begin{falla}{No encuentro indice.json}
+  Falta correr \cd{python3 indexar.py} dentro de \cd{semana2/taller}.
+\end{falla}
+
+\begin{falla}{OJO: 4 PDF sin indexar}
+  No hay \cd{pdftotext} ni \cd{pypdf}. Instalen uno (sección 2) y vuelvan a
+  indexar. Para la configuración 2 basta con las teorías.
+\end{falla}
+
+\begin{falla}{casi todas las respuestas vacías}
+  El modelo no escribió ninguna demostración: \cd{limpiar.py} no encontró
+  \cd{proof}, \cd{by} ni \cd{apply}. Abran \cd{registros/config2.jsonl} y
+  lean el campo \cd{crudo}. Si el modelo dice que el mensaje es muy largo, o
+  responde sobre otra cosa, bajen \cd{K} a 2 en \cd{config2.py}.
+\end{falla}
+
+\begin{falla}{ModuleNotFoundError: modelo}
+  \cd{config2.py} busca \cd{modelo.py} en \cd{../../semana1/taller}. Si
+  movieron carpetas, hagan \cd{git pull} o restauren la estructura del
+  repositorio.
+\end{falla}
+
+% ====================================================================
+\section{Tarea para el próximo jueves}
+
+\begin{enumerate}
+  \item Índice construido y \cd{medir\_recuperacion.py} corrido. Anoten el
+    resultado.
+  \item Configuración 2 completa sobre las 58, con el mismo modelo de la
+    configuración 1, y calificada. ¿Cuánto subió respecto a la línea base?
+    ¿Cuántas respuestas salieron \cd{estilo}?
+  \item Responder las preguntas del anexo A del enunciado con
+    \cd{preguntar.py} y revisar a mano cada cita: ¿el fragmento dice lo que
+    el modelo afirma?
+  \item Tres preguntas trampa: una con premisa falsa, una fuera de tema y
+    una que el corpus no responde. ¿El asistente lo admite?
+  \item Formalización: al menos cinco enunciados escritos. Con su archivo
+    de soluciones pueden indexarlo (\cd{python3 indexar.py su/carpeta}) y
+    medir si la búsqueda encuentra sus propios lemas.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,558 @@
+% Tema 1: Deduccion natural en logica proposicional
+% Diapositivas de clase. Compilar con: pdflatex tema1_deduccion_natural.tex (x2)
+%
+% Version para repartir (sin pausas): ver tema1_deduccion_natural_handout.tex
+\documentclass[11pt,aspectratio=169]{beamer}
+
+\usetheme{metropolis}
+\metroset{sectionpage=progressbar, numbering=fraction, progressbar=frametitle,
+          block=fill}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noquoting]{babel}
+\usepackage{alltt}
+\usepackage{booktabs}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+
+\definecolor{azul}{HTML}{1F4E79}
+\definecolor{verde}{HTML}{2E7D32}
+\definecolor{granate}{HTML}{8E2A2A}
+\setbeamercolor{frametitle}{bg=azul}
+\setbeamercolor{progress bar}{fg=verde}
+\setbeamercolor{alerted text}{fg=granate}
+\setbeamercolor{block title}{bg=azul!12, fg=azul}
+\setbeamercolor{block body}{bg=azul!5}
+
+% --- simbolos de Isabelle, tal como los muestra jEdit -----------------
+\newcommand{\sAnd}{\(\wedge\)}
+\newcommand{\sOr}{\(\vee\)}
+\newcommand{\sNot}{\(\neg\)}
+\newcommand{\sImp}{\(\longrightarrow\)}
+\newcommand{\sIff}{\(\longleftrightarrow\)}
+\newcommand{\sMeta}{\(\Longrightarrow\)}
+\newcommand{\sTurn}{\(\vdash\)}
+\newcommand{\sLb}{\(\llbracket\)}
+\newcommand{\sRb}{\(\rrbracket\)}
+
+% --- coloreado del codigo, siguiendo la salida LaTeX de Isabelle ------
+% (mismos colores del libro de 2018: comandos violeta, cadenas rojo
+%  ladrillo, comentarios verde)
+\definecolor{isaCmd}{HTML}{A020F0}   % comandos de Isar
+\definecolor{isaStr}{HTML}{B22222}   % cadenas "..."
+\definecolor{isaCmt}{HTML}{008000}   % comentarios (* ... *)
+\definecolor{resalte}{HTML}{FFE9A8}  % fondo de las reglas
+
+\newcommand{\kw}[1]{\textcolor{isaCmd}{\textbf{#1}}}
+\newcommand{\str}[1]{\textcolor{isaStr}{#1}}
+\newcommand{\cmt}[1]{\textcolor{isaCmt}{\textit{#1}}}
+
+% --- resaltado de reglas de deduccion ---------------------------------
+% Fondo en vez de color de letra: asi no compite con la paleta anterior
+% y la regla queda inconfundible al proyectar.
+% \Rn: nombre de regla en prosa y en los listados de reglas
+\newcommand{\Rn}[1]{\textcolor{granate}{\textbf{#1}}}
+% \R: dentro de una demostracion, donde hay que localizar la regla entre
+% los demas tokens. Fondo en vez de color de letra, para no competir con
+% la paleta de Isabelle.
+\newcommand{\R}[1]{{\setlength{\fboxsep}{1pt}%
+  \colorbox{resalte}{\ttfamily\bfseries\textcolor{granate}{#1}}}}
+% Nota: el bloque de reglas NO puede ser una macro. El contenido va en
+% alltt, y si se pasa como argumento de macro TeX consume los saltos de
+% linea antes de que alltt los active, y las reglas se fusionan en un
+% parrafo. Se usa el entorno block con overlay: \begin{block}<2->{...}
+\newcommand{\nota}[1]{{\small\itshape\color{gray} #1}}
+
+\title{Deducción natural en lógica proposicional}
+\subtitle{Tema 1 --- Razonamiento Automático}
+\author{Fabián Fernando Serrano Suárez}
+\institute{Ciencias de la Computación}
+\date{Isabelle/HOL}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}[t]{Recorrido}
+  \vspace{0.5em}
+  {\small\tableofcontents[pausesections]}
+\end{frame}
+
+% =====================================================================
+\section{Cómo se lee una demostración}
+
+\begin{frame}[fragile]{Anatomía de una demostración en Isar}
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_1_1:
+  \kw{assumes} 1: \str{"p \sAnd{} q"} \kw{and}
+          2: \str{"r"}
+  \kw{shows} \str{"q \sAnd{} r"}
+\kw{proof} -
+  \kw{have} 3: \str{"q"} \kw{using} 1 \kw{by} (rule \R{conjunct2})
+  \kw{show} 4: \str{"q \sAnd{} r"} \kw{using} 3 2 \kw{by} (rule \R{conjI})
+\kw{qed}
+\end{alltt}
+  \pause
+  \vspace{-0.4em}
+  \begin{columns}[t]
+    \begin{column}{0.48\textwidth}
+      \small
+      \texttt{{\bf{assumes}}} \quad para indicar las hipótesis\\
+      \texttt{{\bf{and}}} \quad separa las hipótesis\\
+      \texttt{{\bf{shows}}} \quad la conclusión\\
+      \texttt{{\bf{proof -}}} \quad prueba sin método por defecto
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \small
+      \texttt{{\bf{have}}} \quad un paso intermedio\\
+      \texttt{{\bf{using}}} \quad qué hechos usa el paso\\
+      \texttt{\bf{by (rule R)}} \quad con qué regla\\
+      \texttt{{\bf{show}}} / \texttt{{\bf{qed}}} \quad la conclusión y el cierre.
+    \end{column}
+  \end{columns}
+  \vspace{0.6em}
+  \pause
+  \nota{Cada paso dice explícitamente \alert{qué hechos se utilizan} y \alert{con qué reglas}.}
+\end{frame}
+
+\begin{frame}{Dos niveles de flecha}
+  \begin{center}
+  \begin{tabular}{lll}
+    \toprule
+    \bfseries Símbolo & \bfseries Se lee & \bfseries Nivel\\
+    \midrule
+    \pause
+    $\longrightarrow$ & «si \ldots{} entonces» & fórmula del \alert{objeto}\\
+    \pause
+    $\Longrightarrow$ & «de \ldots{} se deduce» & regla del \alert{meta-nivel}\\
+    \pause
+    $\llbracket A;\, B \rrbracket \Longrightarrow C$ & «de $A$ y $B$ se deduce $C$» & regla con dos premisas\\
+    \pause
+    $\vdash$ & «\ldots{} demuestra \ldots» & el enunciado del ejercicio\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vfill
+  \pause
+  \begin{center}
+    \alert{$p \longrightarrow q$ es una fórmula que puede ser verdadera o
+    falsa. $P \Longrightarrow Q$ es una regla de inferencia.}
+  \end{center}
+\end{frame}
+
+% =====================================================================
+\section{Conjunción}
+
+\begin{frame}[fragile]{Las reglas de la conjunción}
+  \begin{block}{Reglas de deducción usadas}
+\begin{alltt}\footnotesize
+\Rn{conjI}:      \sLb{}P; Q\sRb{} \sMeta{} P \sAnd{} Q
+\Rn{conjunct1}: P \sAnd{} Q \sMeta{} P
+\Rn{conjunct2}: P \sAnd{} Q \sMeta{} Q
+\end{alltt}
+\end{block}
+  \pause
+  \begin{itemize}
+    \item \Rn{conjI} \emph{introduce} la conjunción: de $P$ y $Q$, se
+      concluye $P \wedge Q$.
+    \pause
+    \item \Rn{conjunct1} y \Rn{conjunct2} la \emph{elimina la conjunción}: de
+      $P \wedge Q$ se deduce cada parte.
+  \end{itemize}
+  \vfill
+  \pause
+  \nota{Toda regla de deducción natural viene en pareja:
+  una de introducción y una de eliminación por conectivo.}
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo 1: \texttt{p \sAnd{} q, r \sTurn{} q \sAnd{} r}}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_1_1:
+  \kw{assumes} 1: \str{"p \sAnd{} q"} \kw{and}
+          2: \str{"r"}
+  \kw{shows} \str{"q \sAnd{} r"}
+\kw{proof} -
+  \kw{have} 3: \str{"q"}
+    \kw{using} 1 \kw{by} (rule \R{conjunct2})
+  \kw{show} 4: \str{"q \sAnd{} r"}
+    \kw{using} 3 2 \kw{by} (rule \R{conjI})
+\kw{qed}
+\end{alltt}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{block}<2->{Reglas de deducción usadas}
+\begin{alltt}\scriptsize
+\Rn{conjunct2}: P \sAnd{} Q \sMeta{} Q
+\Rn{conjI}: \sLb{}P; Q\sRb{} \sMeta{} P \sAnd{} Q
+\end{alltt}
+\end{block}
+      \footnotesize
+      \begin{itemize}
+        \item<3-> \textbf{Paso 3:} de la hipótesis 1
+          (\texttt{p \sAnd{} q}) se deduce \texttt{q}.
+        \item<4-> \textbf{Paso 4:} junto \texttt{q} (paso 3) con
+          \texttt{r} (hipótesis 2).
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{La misma prueba, más corta}
+  \textbf{Dejando la regla implícita} con \texttt{..}\ --- Isabelle la
+  encuentra:
+\begin{alltt}\footnotesize
+\kw{proof} -
+  \kw{have} \str{"q"} \kw{using} assms(1) ..
+  \kw{thus} \str{"q \sAnd{} r"} \kw{using} assms(2) ..
+\kw{qed}
+\end{alltt}
+  \pause
+  \textbf{Automática:}
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_1_5: \str{"\sLb{}p \sAnd{} q; r\sRb{} \sMeta{} q \sAnd{} r"}
+\kw{by} auto
+\end{alltt}
+  \vspace{0.4em}
+  \pause
+  \begin{center}
+    \alert{Siete líneas $\longrightarrow$ dos.}\\
+  \end{center}
+\end{frame}
+
+% =====================================================================
+\section{Doble negación}
+
+\begin{frame}[fragile]{Ejemplo 2: \texttt{p, \sNot\sNot(q \sAnd{} r) \sTurn{} \sNot\sNot p \sAnd{} r}}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_2_1:
+  \kw{assumes} 1: \str{"p"} \kw{and}
+          2: \str{"\sNot\sNot(q \sAnd{} r)"}
+  \kw{shows} \str{"\sNot\sNot p \sAnd{} r"}
+\kw{proof} -
+  \kw{have} 3: \str{"\sNot\sNot p"}
+    \kw{using} 1 \kw{by} (rule \R{notnotI})
+  \kw{have} 4: \str{"q \sAnd{} r"}
+    \kw{using} 2 \kw{by} (rule \R{notnotD})
+  \kw{have} 5: \str{"r"}
+    \kw{using} 4 \kw{by} (rule \R{conjunct2})
+  \kw{show} 6: \str{"\sNot\sNot p \sAnd{} r"}
+    \kw{using} 3 5 \kw{by} (rule \R{conjI})
+\kw{qed}
+\end{alltt}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{block}<2->{Reglas de deducción usadas}
+\begin{alltt}\scriptsize
+\Rn{notnotI}: P \sMeta{} \sNot\sNot P
+\Rn{notnotD}: \sNot\sNot P \sMeta{} P
+\end{alltt}
+\end{block}
+      \footnotesize
+      \begin{itemize}
+        \item<3-> Cuatro pasos, cada uno con su regla. Se lee como el
+          razonamiento que uno haría en papel.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Condicional}
+
+\begin{frame}[fragile]{Ejemplo 3: Modus Ponens: eliminacion del condicional}
+  Demostrar \quad
+  \texttt{\sNot p \sAnd{} q,\; \sNot p \sAnd{} q \sImp{} r \sOr{} \sNot p
+  \;\sTurn{}\; r \sOr{} \sNot p}
+  \vspace{0.5em}
+  \pause
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_3_1:
+  \kw{assumes} 1: \str{"\sNot p \sAnd{} q"} \kw{and}
+          2: \str{"\sNot p \sAnd{} q \sImp{} r \sOr{} \sNot p"}
+  \kw{shows}      \str{"r \sOr{} \sNot p"}
+\kw{proof} -
+  \kw{show} \str{"r \sOr{} \sNot p"} \kw{using} 2 1 \kw{by} (rule \R{mp})
+\kw{qed}
+\end{alltt}
+  \pause
+  \begin{block}{Reglas de deducción usadas}
+\begin{alltt}\footnotesize
+\Rn{mp}: \sLb{}P \sImp{} Q; P\sRb{} \sMeta{} Q
+\end{alltt}
+\end{block}
+  \pause
+  \vspace{0.2em}
+  \nota{Un solo paso. El orden de \texttt{using 2 1} importa: primero el
+  condicional, después el antecedente.}
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo 8: introducir un condicional}
+  Demostrar \quad \texttt{p \sImp{} q \;\sTurn{}\; \sNot q \sImp{} \sNot p}
+  \vspace{0.4em}
+  \pause
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_8_1:
+  \kw{assumes} 1: \str{"p \sImp{} q"}
+  \kw{shows} \str{"\sNot q \sImp{} \sNot p"}
+\kw{proof} -
+  \{ \kw{assume} 2: \str{"\sNot q"}
+    \kw{have} \str{"\sNot p"} \kw{using} 1 2 \kw{by} (rule \R{mt}) \}
+  \kw{thus} \str{"\sNot q \sImp{} \sNot p"} \kw{by} (rule \R{impI})
+\kw{qed}
+\end{alltt}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{block}<3->{Reglas de deducción usadas}
+\begin{alltt}\scriptsize
+\Rn{impI}: (P \sMeta{} Q) \sMeta{} P \sImp{} Q
+\Rn{mt}: \sLb{}P \sImp{} Q; \sNot Q\sRb{} \sMeta{} \sNot P
+\end{alltt}
+\end{block}
+      \footnotesize
+      \begin{itemize}
+        \item<4-> Las llaves \texttt{\{ \ldots{} \}} abren un
+          \alert{bloque}: dentro vale la suposición \texttt{\sNot q}.
+        \item<5-> \Rn{impI} convierte ese bloque ---«suponiendo
+          \texttt{\sNot q} se obtiene \texttt{\sNot p}»--- en el
+          condicional.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.3em}
+  \onslide<6->{\nota{Dentro del bloque razonamos con \(\Longrightarrow\); el
+  resultado es una fórmula con \(\longrightarrow\).}}
+\end{frame}
+
+% =====================================================================
+\section{Disyunción}
+
+\begin{frame}[fragile]{Las reglas de la disyunción}
+  \begin{block}{Reglas de deducción usadas}
+\begin{alltt}\footnotesize
+\Rn{disjI1}: P \sMeta{} P \sOr{} Q
+\Rn{disjI2}: Q \sMeta{} P \sOr{} Q
+\Rn{disjE}:  \sLb{}P \sOr{} Q; P \sMeta{} R; Q \sMeta{} R\sRb{} \sMeta{} R
+\end{alltt}
+\end{block}
+  \pause
+  \begin{itemize}
+    \item Introducir es fácil: basta una de las dos partes.
+    \pause
+    \item \alert{Eliminar exige razonar por casos}: hay que llegar a la
+      misma conclusión $R$ suponiendo $P$ y suponiendo $Q$.
+  \end{itemize}
+  \vfill
+  \pause
+  \nota{\Rn{disjE} es una regla de prueba por casos a partir de la hipótesis $P \vee Q$.}
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo 12: \texttt{p \sOr{} q \sTurn{} q \sOr{} p}}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_12_1:
+  \kw{assumes} \str{"p \sOr{} q"}
+  \kw{shows} \str{"q \sOr{} p"}
+\kw{proof} -
+  \kw{have} \str{"p \sOr{} q"} \kw{using} assms \kw{by} \kw{this}
+  \kw{moreover}
+  \{ \kw{assume} 2: \str{"p"}
+    \kw{have} \str{"q \sOr{} p"} \kw{using} 2 \kw{by} (rule \R{disjI2}) \}
+  \kw{moreover}
+  \{ \kw{assume} 3: \str{"q"}
+    \kw{have} \str{"q \sOr{} p"} \kw{using} 3 \kw{by} (rule \R{disjI1}) \}
+  \kw{ultimately} \kw{show} \str{"q \sOr{} p"} \kw{by} (rule \R{disjE})
+\kw{qed}
+\end{alltt}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \footnotesize
+      \begin{itemize}
+        \item<2-> \texttt{moreover} va \alert{acumulando} hechos;
+          \texttt{ultimately} permite utilizar los hechos separados por moreover.\
+        \item<3-> Los tres hechos acumulados son exactamente las tres
+          premisas que pide \Rn{disjE}:
+          \begin{enumerate}
+            \item<4-> \texttt{p \sOr{} q}
+            \item<4-> de \texttt{p} se deduce  \texttt{q \sOr{} p}
+            \item<4-> de \texttt{q} se deduce \texttt{q \sOr{} p}
+          \end{enumerate}
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Negación}
+
+\begin{frame}[fragile]{Las reglas de la negación}
+  \begin{block}{Reglas de deducción usadas}
+\begin{alltt}\footnotesize
+\Rn{notI}:   (P \sMeta{} False) \sMeta{} \sNot P
+\Rn{notE}:   \sLb\sNot P; P\sRb{} \sMeta{} R
+\Rn{FalseE}: False \sMeta{} P
+\end{alltt}
+\end{block}
+  \pause
+  \begin{itemize}
+    \item \Rn{notI}: para probar \texttt{\sNot P}, suponga $P$ y llegue a una
+      contradicción.
+    \pause
+    \item \Rn{notE}: de $P$ y $\neg P$ se deduce  \alert{cualquier fórmula}.
+    \pause
+    \item \Rn{FalseE} de falso se deduce cualquier fórmula.
+  \end{itemize}
+  \vfill
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo 15: \texttt{\sNot p \sOr{} q \sTurn{} p \sImp{} q}}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_15_1:
+  \kw{assumes} 1: \str{"\sNot p \sOr{} q"}
+  \kw{shows} \str{"p \sImp{} q"}
+\kw{proof} (rule \R{impI})
+  \kw{assume} 2: \str{"p"}
+  \kw{note} 1
+  \kw{thus} \str{"q"}
+  \kw{proof} (rule \R{disjE})
+    \{ \kw{assume} 3: \str{"\sNot p"}
+      \kw{show} \str{"q"} \kw{using} 3 2 \kw{by} (rule \R{notE}) \}
+  \kw{next}
+    \{ \kw{assume} 4: \str{"q"}
+      \kw{show} \str{"q"} \kw{using} 4 \kw{by} \kw{this} \}
+  \kw{qed}
+\kw{qed}
+\end{alltt}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \footnotesize
+      \begin{itemize}
+        \item<2-> \textbf{Hacia atrás:} \texttt{proof (rule \Rn{impI})}
+          dice con qué regla se cerrará \alert{antes} de probar nada.
+        \item<3-> Dentro, \Rn{disjE} abre los dos casos, separados por
+          \texttt{next}.
+        \item<4-> \textbf{Caso \texttt{\sNot p}:} junto con \texttt{p} da
+          contradicción, y \Rn{notE} produce la \texttt{q}.
+        \item<5-> \textbf{Caso \texttt{q}:} ya la tenemos.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Bicondicional y reglas clásicas}
+
+\begin{frame}[fragile]{Bicondicional}
+  \begin{block}{Reglas de deducción usadas}
+\begin{alltt}\footnotesize
+\Rn{iffI}:  \sLb{}P \sMeta{} Q; Q \sMeta{} P\sRb{} \sMeta{} P \sIff{} Q
+\Rn{iffD1}: \sLb{}Q \sIff{} P; Q\sRb{} \sMeta{} P
+\Rn{iffD2}: \sLb{}P \sIff{} Q; Q\sRb{} \sMeta{} P
+\end{alltt}
+\end{block}
+  \pause
+  \vfill
+  \begin{center}
+    Probar una equivalencia es probar \alert{las dos implicaciones}.
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo 24:  razonar por contradicción}
+  Demostrar \quad \texttt{\sNot p,\; p \sOr{} q \;\sTurn{}\; q}
+  \vspace{0.4em}
+  \pause
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+\begin{alltt}\footnotesize
+\kw{lemma} ejemplo_24_1:
+  \kw{assumes} \str{"\sNot p"}
+          \str{"p \sOr{} q"}
+  \kw{shows} \str{"q"}
+\kw{using} `p \sOr{} q`
+\kw{proof} (rule \R{disjE})
+  \kw{assume} \str{"p"}
+  \kw{with} assms(1) \kw{show} \str{"q"} \kw{by} \R{contradiction}
+\kw{next}
+  \kw{assume} \str{"q"}
+  \kw{thus} \str{"q"} \kw{by} \kw{assumption}
+\kw{qed}
+\end{alltt}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{block}<3->{Reglas de deducción usadas}
+\begin{alltt}\scriptsize
+\Rn{ccontr}:
+  (\sNot P \sMeta{} False) \sMeta{} P
+\end{alltt}
+\end{block}
+      \footnotesize
+      \begin{itemize}
+        \item<4-> \texttt{by contradiction} cierra el caso: tenemos
+          \texttt{p} y \texttt{\sNot p} a la vez.
+        \item<5-> \alert{\Rn{ccontr} es clásica}: no vale en lógica
+          intuicionista. Es la que permite «supongamos que no\ldots».
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Resumen}
+
+\begin{frame}[fragile]{Todas las reglas del tema}
+  \begin{center}
+  \small
+  \begin{tabular}{lll}
+    \toprule
+    \bfseries Conectivo & \bfseries Introducción & \bfseries Eliminación\\
+    \midrule
+    \pause
+    \(\wedge\) & \Rn{conjI} & \Rn{conjunct1}, \Rn{conjunct2}, \Rn{conjE}\\
+    \pause
+    \(\vee\) & \Rn{disjI1}, \Rn{disjI2} & \Rn{disjE}\\
+    \pause
+    \(\longrightarrow\) & \Rn{impI} & \Rn{mp}, \Rn{impE}\\
+    \pause
+    \(\neg\) & \Rn{notI} & \Rn{notE}\\
+    \pause
+    \(\longleftrightarrow\) & \Rn{iffI} & \Rn{iffD1}, \Rn{iffD2}\\
+    \pause
+    \(\bot\) & --- & \Rn{FalseE}\\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vfill
+  \pause
+  \small
+  \textbf{Derivadas:} \Rn{mt}, \Rn{notnotI}, \Rn{notnotD}\qquad
+  \textbf{Clásicas:} \Rn{ccontr}, \Rn{classical}, \Rn{excluded\_middle}
+  \vfill
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}
+    \item Cada paso de una prueba dice \alert{de qué hechos se deduce} y
+      \alert{con qué reglas}.
+    \pause
+    \item Cada conectivo trae su pareja de reglas: introducción y
+      eliminación.
+    \pause
+    \item Distinga \(\longrightarrow\) (fórmula) de \(\Longrightarrow\)
+      (regla). Es el error más común del tema.
+    \pause
+    \item Escriba primero la versión detallada. La automática viene
+      después, y se entiende porque ya sabe qué está automatizando.
+  \end{itemize}
+  \vfill
+\end{frame}
+
+\end{document}

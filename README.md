@@ -21,12 +21,14 @@ python3 config1.py 3       # configuración 1 con 3 preguntas
 
 Si ya lo habían clonado: `git pull`.
 
+**Semana 2:** `cd semana2/taller && python3 indexar.py && python3 medir_recuperacion.py`, luego `python3 config2.py 3`. El corpus del curso está en [`ConjuntoDatos/`](ConjuntoDatos), con autorización del profesor Fabián.
+
 ## Materiales semana a semana
 
 | Jueves | Tema | Manual | Diapositivas | Código |
 |---|---|---|---|---|
 | 1 · 5 nov | **El hilo:** el modelo y la línea base (configuración 1) | [Manual (PDF)](semana1/Manual_Semana1.pdf) | [Diapositivas (PDF)](semana1/Diapositivas_Semana1.pdf) | [`semana1/taller/`](semana1/taller) |
-| 2 | **La biblioteca:** buscar en los documentos y citar (configuración 2) | — | — | — |
+| 2 · 12 nov | **La biblioteca:** buscar en los documentos y citar (configuración 2) | [Manual (PDF)](semana2/Manual_Semana2.pdf) | [Diapositivas (PDF)](semana2/Diapositivas_Semana2.pdf) | [`semana2/taller/`](semana2/taller) |
 | 3 | **La flecha roja:** verificar con Isabelle y corregir (configuración 3) | — | — | — |
 | 4 | **El espejo:** evaluar, analizar errores, informe | — | — | — |
 
