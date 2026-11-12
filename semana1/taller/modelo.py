@@ -5,6 +5,7 @@ CONFIG = {
     "proveedor":   "ollama",      # o "openrouter"
     "modelo":      "gemma3:4b",   # o el nombre de otro modelo
     "temperatura": 0.2,           # baja = respuestas mas estables
+    "max_tokens":  800,           # tope: un modelo pequeno a veces no para de escribir
 }
 
 URLS = {
@@ -21,8 +22,9 @@ def preguntar(mensajes, cfg=CONFIG):
 
     cuerpo = json.dumps({"model": cfg["modelo"],
                          "messages": mensajes,
-                         "temperature": cfg["temperatura"]}).encode("utf-8")
+                         "temperature": cfg["temperatura"],
+                         "max_tokens": cfg.get("max_tokens", 800)}).encode("utf-8")
 
     req = urllib.request.Request(URLS[cfg["proveedor"]], data=cuerpo, headers=cabeceras)
-    with urllib.request.urlopen(req, timeout=300) as r:
+    with urllib.request.urlopen(req, timeout=120) as r:
         return json.load(r)["choices"][0]["message"]["content"]

@@ -27,7 +27,10 @@ respuestas = {}
 for i, p in enumerate(preguntas, 1):
     frags  = pasajes_para(p, indice, K)
     msgs   = pedir_mensajes(p, extra=extra_para_demostrar(frags))
-    crudo  = preguntar(msgs)
+    try:
+        crudo = preguntar(msgs)
+    except Exception as e:                    # timeout, modelo apagado...: se anota y se sigue
+        crudo = f"ERROR: {e}"
     prueba = extraer_prueba(crudo)
     respuestas[p["id"]] = prueba
     registrar("registros/config2.jsonl", id=p["id"], modelo=CONFIG["modelo"],

@@ -16,7 +16,10 @@ if len(sys.argv) > 1:
 respuestas = {}
 for i, p in enumerate(preguntas, 1):
     msgs   = pedir_mensajes(p)
-    crudo  = preguntar(msgs)
+    try:
+        crudo = preguntar(msgs)
+    except Exception as e:                    # timeout, modelo apagado...: se anota y se sigue
+        crudo = f"ERROR: {e}"
     prueba = extraer_prueba(crudo)
     respuestas[p["id"]] = prueba
     registrar("registros/config1.jsonl", id=p["id"], modelo=CONFIG["modelo"],
