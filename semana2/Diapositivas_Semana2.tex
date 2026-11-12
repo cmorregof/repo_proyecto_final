@@ -332,7 +332,31 @@ python3 ../../Recursos/evaluar.py ../../Recursos/benchmark_R1.json \
   \end{itemize}
 \end{frame}
 
-%RESULTADOS_DIAPOS
+
+\begin{frame}{Lo que pasó en el ensayo: \texttt{llama3.2:3b}, 20 preguntas}
+  \begin{center}
+  \begin{tabular}{@{}lccc@{}}
+    \toprule
+    & aceptadas & rechazadas & trampa \\
+    \midrule
+    Configuración 1 (sin búsqueda) & 3 & 16 & 1 \\
+    \alert{Configuración 2 (con búsqueda)} & \alert{9} & \alert{11} & \alert{0} \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item El mismo modelo, con libro abierto, \alert{triplica} lo que Isabelle acepta.
+    \item Sin búsqueda, en la pregunta 6 el modelo no paraba de escribir.
+      Con los pasajes, terminó.
+    \item Pero la búsqueda no es gratis: las preguntas 13, 14 y 15 pasaban
+      sin ayuda y \alert{fallaron} con ella.
+    \item En la 1, el modelo tenía la solución exacta en [F1] y la copió mal:
+      escribió \cd{proof} donde el libro dice \cd{proof -}.
+  \end{itemize}
+  \nota{Tener el pasaje correcto no basta. El jueves 3, Isabelle le devuelve
+  el error y el modelo corrige.}
+\end{frame}
+
 
 \begin{frame}[fragile]{Paso 4: preguntas con citas}
 \begin{lstlisting}[language=bash]

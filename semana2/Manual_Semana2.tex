@@ -322,7 +322,32 @@ respuesta cruda y la prueba limpia (requisito R5).
 
 \subsection{Lo que pasó en el ensayo con el modelo}
 
-%RESULTADOS
+Con \cd{llama3.2:3b} sobre las primeras 20 preguntas de R1, calificadas con
+\cd{evaluar.py}:
+
+\begin{center}
+\small
+\begin{tabular}{@{}lccc@{}}
+  \toprule
+  & aceptadas & rechazadas & trampa \\
+  \midrule
+  Configuración 1 (sin búsqueda) & 3 & 16 & 1 \\
+  Configuración 2 (con búsqueda) & 9 & 11 & 0 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+El mismo modelo triplicó lo que Isabelle acepta. Hubo dos sorpresas que vale
+la pena mirar en sus propios registros. Las preguntas 13, 14 y 15 pasaban sin
+ayuda y fallaron con ella: los pasajes también pueden despistar. Y en la
+pregunta 1 el modelo tenía la solución exacta en [F1] y la copió mal, con
+\cd{proof} donde el libro dice \cd{proof -}. Tener el pasaje correcto no basta;
+por eso la semana 3 le devuelve al modelo el error de Isabelle.
+
+En la configuración 1, la pregunta 6 se quedó escribiendo sin parar hasta
+agotar el tiempo. Desde esta semana \cd{modelo.py} pone un tope de 800
+\emph{tokens} de salida, y una pregunta que falla se anota y no detiene la
+corrida. Hagan \cd{git pull} para tenerlo.
 
 % ====================================================================
 \section{Responder con fuentes, o admitir que no se sabe}
@@ -372,6 +397,11 @@ avisos posibles:
   \cd{proof}, \cd{by} ni \cd{apply}. Abran \cd{registros/config2.jsonl} y
   lean el campo \cd{crudo}. Si el modelo dice que el mensaje es muy largo, o
   responde sobre otra cosa, bajen \cd{K} a 2 en \cd{config2.py}.
+\end{falla}
+
+\begin{falla}{PermissionError: [Errno 13] Permission denied: ''}
+  La variable \cd{ISABELLE} está vacía o apunta mal. Búsquenla y expórtenla,
+  por ejemplo \cd{export ISABELLE=\$HOME/isabelle/Isabelle2025.app/bin/isabelle}.
 \end{falla}
 
 \begin{falla}{ModuleNotFoundError: modelo}
